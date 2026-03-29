@@ -10,23 +10,15 @@ const toSafeNumber = (value: unknown, fallback = 0): number => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-export function normalizePromotionLegacy(promo?: Promotion | null): Promotion {
-  if (!promo) return { type: "none" };
-  return promo;
-}
-
 export const normalizePromotion = (p?: Promotion): Promotion => {
   if (!p) return { type: "none" };
 
   switch (p.type) {
-    case "none":
     case "2x1":
-    case "3x2":
-      return { type: p.type };
+      return { type: "multi", buy: 2, pay: 1 };
 
-    case "percent":
-    case "discount":
-      return { type: p.type, value: Number(p.value ?? 0) };
+    case "3x2":
+      return { type: "multi", buy: 3, pay: 2 };
 
     case "multi":
       return {
@@ -34,6 +26,14 @@ export const normalizePromotion = (p?: Promotion): Promotion => {
         buy: Number(p.buy ?? 0),
         pay: Number(p.pay ?? 0),
       };
+
+    case "percent":
+    case "discount":
+      return { type: p.type, value: Number(p.value ?? 0) };
+
+    case "none":
+    default:
+      return { type: "none" };
   }
 };
 
@@ -101,7 +101,6 @@ export function getPromotionLabel(promo?: Promotion | null): string {
       return "";
   }
 }
-
 export function hasPromotion(promo?: Promotion | null): boolean {
   return !!promo && promo.type !== "none";
 }
@@ -111,45 +110,46 @@ export function validatePromotion(
   quantity: number,
   unitPrice: number,
 ): ValidationResult {
-  const normalized = normalizePromotion(promo);
-  const qty = Math.max(0, toSafeNumber(quantity, 0));
-  const price = Math.max(0, toSafeNumber(unitPrice, 0));
+  const p = normalizePromotion(promo);
+  const qty = Math.max(0, toSafeNumber(quantity));
+  const price = Math.max(0, toSafeNumber(unitPrice));
 
-  if (normalized.type === "none") {
-    return { valid: true };
-  }
+  switch (p.type) {
+    case "none":
+      return { valid: true };
 
-  switch (normalized.type) {
     case "multi":
-      if (
-        normalized.buy <= 0 ||
-        normalized.pay <= 0 ||
-        normalized.pay > normalized.buy
-      ) {
+      if (p.buy <= 0 || p.pay <= 0 || p.pay > p.buy) {
         return { valid: false, message: "Oferta inválida" };
       }
-      return qty >= normalized.buy
+      return qty >= p.buy
         ? { valid: true }
-        : { valid: false, message: `Min ${normalized.buy}` };
+        : { valid: false, message: `Min ${p.buy}` };
 
     case "percent":
-      if (normalized.value <= 0 || normalized.value > 100) {
+      if (p.value <= 0 || p.value > 100) {
         return { valid: false, message: "Descuento inválido" };
       }
       return price > 0
         ? { valid: true }
         : { valid: false, message: "Precio inválido" };
 
-    case "discount":
-      if (normalized.value <= 0) {
+    case "discount": {
+      const baseTotal = quantity * unitPrice;
+
+      if (promo.value <= 0) {
         return { valid: false, message: "Descuento inválido" };
       }
-      return price > 0
-        ? { valid: true }
-        : { valid: false, message: "Precio inválido" };
 
-    default:
+      if (promo.value > baseTotal) {
+        return {
+          valid: false,
+          message: "El descuento supera el total",
+        };
+      }
+
       return { valid: true };
+    }
   }
 }
 
@@ -158,24 +158,26 @@ function applyPromotion(
   quantity: number,
   unitPrice: number,
 ): number {
-  const baseTotal = quantity * unitPrice;
+  const base = quantity * unitPrice;
 
   switch (promo.type) {
     case "multi": {
       const groups = Math.floor(quantity / promo.buy);
       const remainder = quantity % promo.buy;
-      return (groups * promo.pay + remainder) * unitPrice;
+
+      const payableUnits = groups * promo.pay + remainder;
+      return payableUnits * unitPrice;
     }
 
     case "percent":
-      return baseTotal * (1 - promo.value / 100);
+      return base * (1 - promo.value / 100);
 
     case "discount":
-      return Math.max(0, baseTotal - promo.value);
+      return Math.max(0, base - promo.value);
 
     case "none":
     default:
-      return baseTotal;
+      return base;
   }
 }
 
@@ -187,8 +189,8 @@ export function calculateItemPrice(input: {
   promo: Promotion;
   promoLabel: string;
 } {
-  const quantity = Math.max(0, toSafeNumber(input.quantity, 0));
-  const unitPrice = Math.max(0, toSafeNumber(input.unitPrice, 0));
+  const quantity = Math.max(0, toSafeNumber(input.quantity));
+  const unitPrice = Math.max(0, toSafeNumber(input.unitPrice));
   const promo = normalizePromotion(input.promo);
 
   const baseTotal = round2(quantity * unitPrice);
@@ -207,7 +209,7 @@ export function calculateItemPrice(input: {
   }
 
   const total = round2(applyPromotion(promo, quantity, unitPrice));
-  const savings = round2(Math.max(0, baseTotal - total));
+  const savings = round2(baseTotal - total);
 
   return {
     baseTotal,

@@ -30,6 +30,13 @@ const parseNumber = (v: string, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const sanitizeNumberInput = (v: string) => {
+  return v
+    .replace(",", ".")
+    .replace(/[^0-9.]/g, "") // solo números y punto
+    .replace(/(\..*)\./g, "$1"); // solo un punto
+};
+
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -204,7 +211,7 @@ export default function ItemDetailScreen() {
             <TextInput
               style={styles.input}
               value={qty}
-              onChangeText={setQty}
+              onChangeText={(text) => setQty(sanitizeNumberInput(text))}
               keyboardType="numeric"
               placeholder="0"
               placeholderTextColor="#9ca3af"
@@ -212,11 +219,11 @@ export default function ItemDetailScreen() {
           </View>
 
           <View style={styles.flex}>
-            <Text style={styles.label}>Precio/{unit}</Text>
+            <Text style={styles.label}>Precio ({unit})</Text>
             <TextInput
               style={styles.input}
               value={price}
-              onChangeText={setPrice}
+              onChangeText={(text) => setPrice(sanitizeNumberInput(text))}
               keyboardType="numeric"
               placeholder="0"
               placeholderTextColor="#9ca3af"

@@ -1,3 +1,4 @@
+import storesData from "@/data/stores.json";
 import React, { createContext, useContext, useState } from "react";
 
 export type Store = {
@@ -26,7 +27,12 @@ type StoresContextType = {
 const StoresContext = createContext<StoresContextType | undefined>(undefined);
 
 export function StoresProvider({ children }: { children: React.ReactNode }) {
-  const [stores, setStores] = useState<Store[]>([]);
+  const [stores, setStores] = useState<Store[]>(
+    (storesData as any[]).map((s) => ({
+      ...s,
+      zipcode: String(s.zipcode), // 🔑 FIX TIPADO
+    })),
+  );
   const [initialized, setInitialized] = useState(false);
 
   /* ---------------------------------------------
