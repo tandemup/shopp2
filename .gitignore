@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# legacy
+legacy/
+
 # convex
 convex/_generated
 

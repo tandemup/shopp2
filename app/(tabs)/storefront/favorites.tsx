@@ -14,12 +14,14 @@ export default function StoreFavoritesScreen() {
   const { mode, selectForListId } = useLocalSearchParams();
   const isSelectMode = mode === "select";
   const { favorites, toggleFavorite } = useStores();
+  const { returnTo } = useLocalSearchParams();
 
   const handleSelectStore = (store: Store) => {
     if (isSelectMode && selectForListId) {
       assignStoreToList(String(selectForListId), store.id);
 
-      router.back(); // 🔥 correcto
+      router.replace(returnTo as string);
+      //router.back();
       return;
     }
 

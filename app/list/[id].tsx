@@ -63,6 +63,7 @@ export default function ShoppingListScreen() {
             params: {
               mode: "select",
               selectForListId: list.id,
+              returnTo: `/list/${list.id}`,
             },
           })
         }

@@ -127,6 +127,8 @@ export default function ItemDetailScreen() {
     );
   };
 
+  const handleScanner = () => {};
+
   const CardNombreBarcode = ({
     nombre,
     barcode,
