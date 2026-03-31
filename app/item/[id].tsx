@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   SafeAreaView,
@@ -33,12 +34,264 @@ const parseNumber = (v: string, fallback = 0) => {
 const sanitizeNumberInput = (v: string) => {
   return v
     .replace(",", ".")
-    .replace(/[^0-9.]/g, "") // solo números y punto
-    .replace(/(\..*)\./g, "$1"); // solo un punto
+    .replace(/[^0-9.]/g, "")
+    .replace(/(\..*)\./g, "$1");
 };
 
+function Header({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <View style={styles.header}>
+      <Pressable style={styles.headerIcon} onPress={onBack}>
+        <Ionicons name="arrow-back" size={22} color="#111827" />
+      </Pressable>
+
+      <Text style={styles.title}>{title}</Text>
+
+      <View style={styles.headerSpacer} />
+    </View>
+  );
+}
+
+function CardNombreBarcode({
+  nameItem,
+  barcodeItem,
+  onChangeName,
+  onChangeBarcode,
+  onScanner,
+  onSearch,
+}: {
+  nameItem: string;
+  barcodeItem: string;
+  onChangeName: (text: string) => void;
+  onChangeBarcode: (text: string) => void;
+  onScanner: () => void;
+  onSearch: () => void;
+}) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.label}>Nombre</Text>
+
+      <TextInput
+        style={styles.input}
+        value={nameItem}
+        onChangeText={onChangeName}
+        placeholder="Nombre del producto"
+        placeholderTextColor="#9ca3af"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+
+      <Text style={[styles.label, styles.sectionGap]}>Código de barras</Text>
+
+      <View style={styles.row}>
+        <TextInput
+          style={[styles.input, styles.flex]}
+          value={barcodeItem}
+          onChangeText={onChangeBarcode}
+          placeholder="EAN-13"
+          placeholderTextColor="#9ca3af"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        <Pressable style={styles.iconButton} onPress={onScanner}>
+          <Ionicons name="barcode-outline" size={18} color="#374151" />
+        </Pressable>
+
+        <Pressable style={styles.iconButton} onPress={onSearch}>
+          <Ionicons name="search-outline" size={18} color="#374151" />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function Unidades({
+  qty,
+  price,
+  unit,
+  onChangeQty,
+  onChangePrice,
+  onChangeUnit,
+}: {
+  qty: string;
+  price: string;
+  unit: string;
+  onChangeQty: (text: string) => void;
+  onChangePrice: (text: string) => void;
+  onChangeUnit: (unit: string) => void;
+}) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.label}>Unidad</Text>
+
+      <View style={styles.unitRow}>
+        {UNITS.map((u) => {
+          const selected = unit === u;
+
+          return (
+            <Pressable
+              key={u}
+              style={[styles.pill, selected && styles.pillActive]}
+              onPress={() => onChangeUnit(u)}
+            >
+              <Text
+                style={[styles.pillText, selected && styles.pillTextActive]}
+              >
+                {u}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View style={[styles.rowSpace, styles.sectionGapLarge]}>
+        <View style={styles.flex}>
+          <Text style={styles.label}>Cantidad ({unit})</Text>
+          <TextInput
+            style={styles.input}
+            value={qty}
+            onChangeText={onChangeQty}
+            keyboardType="numeric"
+            placeholder="0"
+            placeholderTextColor="#9ca3af"
+          />
+        </View>
+
+        <View style={styles.flex}>
+          <Text style={styles.label}>Precio ({unit})</Text>
+          <TextInput
+            style={styles.input}
+            value={price}
+            onChangeText={onChangePrice}
+            keyboardType="numeric"
+            placeholder="0"
+            placeholderTextColor="#9ca3af"
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function PromotionList({
+  quantity,
+  unitPrice,
+  selectedPromo,
+  onSelect,
+}: {
+  quantity: number;
+  unitPrice: number;
+  selectedPromo: Promotion;
+  onSelect: (p: Promotion) => void;
+}) {
+  return (
+    <View style={styles.promoWrap}>
+      {PROMOTIONS.map((option) => {
+        const promo = normalizePromotion(option.promo);
+        const validation = validatePromotion(promo, quantity, unitPrice);
+
+        const disabled = !validation.valid;
+        const selected = isSamePromotion(selectedPromo, promo);
+
+        return (
+          <Pressable
+            key={option.id}
+            onPress={() => {
+              if (disabled) return;
+              onSelect(promo);
+            }}
+            disabled={disabled}
+            style={[
+              styles.promoChip,
+              selected && styles.promoChipSelected,
+              disabled && styles.promoChipDisabled,
+            ]}
+          >
+            <Text
+              style={[
+                styles.promoChipText,
+                selected && styles.promoChipTextSelected,
+                disabled && styles.promoChipTextDisabled,
+              ]}
+            >
+              {option.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function Ofertas({
+  quantity,
+  unitPrice,
+  selectedPromo,
+  onSelect,
+}: {
+  quantity: number;
+  unitPrice: number;
+  selectedPromo: Promotion;
+  onSelect: (p: Promotion) => void;
+}) {
+  const promoValidation = validatePromotion(selectedPromo, quantity, unitPrice);
+
+  return (
+    <View style={styles.card}>
+      <Text style={styles.label}>Ofertas</Text>
+
+      <PromotionList
+        quantity={quantity}
+        unitPrice={unitPrice}
+        selectedPromo={selectedPromo}
+        onSelect={onSelect}
+      />
+
+      {!promoValidation.valid && (
+        <View style={styles.offerWarningBox}>
+          <Text style={styles.offerWarning}>
+            {promoValidation.message ?? "Oferta no válida"}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function Summary({
+  base,
+  savings,
+  total,
+}: {
+  base: number;
+  savings: number;
+  total: number;
+}) {
+  return (
+    <View style={styles.summaryCard}>
+      <Text style={styles.summaryTitle}>Resumen</Text>
+
+      <Text style={styles.summaryLine}>Base: {formatCurrency(base)}</Text>
+
+      <Text style={styles.summarySavings}>
+        Ahorro: {formatCurrency(savings)}
+      </Text>
+
+      <View style={styles.summaryTotalRow}>
+        <Text style={styles.summaryTotalLabel}>Total</Text>
+        <Text style={styles.summaryTotalValue}>{formatCurrency(total)}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function ItemDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, scannedBarcode } = useLocalSearchParams<{
+    id: string;
+    scannedBarcode?: string;
+  }>();
+
   const router = useRouter();
   const { findItemById, updateItem, removeItem } = useLists();
 
@@ -46,8 +299,8 @@ export default function ItemDetailScreen() {
   const item = found?.item;
   const list = found?.list;
 
-  const [name, setName] = useState("");
-  const [barcode, setBarcode] = useState("");
+  const [nameItem, setNameItem] = useState("");
+  const [barcodeItem, setBarcodeItem] = useState("");
   const [unit, setUnit] = useState("u");
   const [qty, setQty] = useState("1");
   const [price, setPrice] = useState("0");
@@ -56,13 +309,19 @@ export default function ItemDetailScreen() {
   useEffect(() => {
     if (!item) return;
 
-    setName(item.name ?? "");
-    setBarcode(item.barcode ?? "");
+    setNameItem(item.name ?? "");
+    setBarcodeItem(item.barcode ?? "");
     setUnit(item.unit ?? "u");
     setQty(String(item.quantity ?? 1));
     setPrice(String(item.unitPrice ?? 0));
     setPromo(normalizePromotion(item.promo));
-  }, [item]); // 🔥 CAMBIO CLAVE
+  }, [item]);
+
+  useEffect(() => {
+    if (scannedBarcode) {
+      setBarcodeItem(scannedBarcode);
+    }
+  }, [scannedBarcode]);
 
   const quantity = parseNumber(qty, 1);
   const unitPrice = parseNumber(price, 0);
@@ -76,6 +335,7 @@ export default function ItemDetailScreen() {
     return (
       <SafeAreaView style={styles.notFound}>
         <Text style={styles.notFoundTitle}>Producto no encontrado</Text>
+
         <Pressable style={styles.notFoundButton} onPress={() => router.back()}>
           <Text style={styles.notFoundButtonText}>Volver</Text>
         </Pressable>
@@ -83,19 +343,35 @@ export default function ItemDetailScreen() {
     );
   }
 
+  const handleScanner = () => {
+    router.push({
+      pathname: "/(tabs)/barcode",
+      params: {
+        id: item.id,
+      },
+    });
+  };
+
+  const handleSearch = () => {
+    if (!barcodeItem.trim()) return;
+
+    const url = `https://www.google.com/search?q=${barcodeItem.trim()}`;
+    Linking.openURL(url);
+  };
+
   const saveItem = async () => {
-    if (!name.trim()) {
+    if (!nameItem.trim()) {
       await alert("Nombre requerido", "Introduce un nombre.");
       return;
     }
 
     updateItem(list.id, item.id, {
-      name: name.trim(),
-      barcode: barcode.trim(),
+      name: nameItem.trim(),
+      barcode: barcodeItem.trim(),
       unit,
       quantity,
       unitPrice,
-      promo: normalizePromotion(promo),
+      promo: safePromo,
     });
 
     router.back();
@@ -113,246 +389,6 @@ export default function ItemDetailScreen() {
     }
   };
 
-  const Header = ({ title }: { title: string }) => {
-    return (
-      <View style={styles.header}>
-        <Pressable style={styles.headerIcon} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
-        </Pressable>
-
-        <Text style={styles.title}>{title}</Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
-    );
-  };
-
-  const handleScanner = () => {};
-
-  const CardNombreBarcode = ({
-    nombre,
-    barcode,
-  }: {
-    nombre: string;
-    barcode: string;
-  }) => {
-    return (
-      <View style={styles.card}>
-        <Text style={styles.label}>{nombre}</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Nombre del producto"
-          placeholderTextColor="#9ca3af"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <Text style={[styles.label, styles.sectionGap]}>Código de barras</Text>
-
-        <View style={styles.row}>
-          <TextInput
-            style={[styles.input, styles.flex]}
-            value={barcode}
-            onChangeText={setBarcode}
-            placeholder="EAN-13"
-            placeholderTextColor="#9ca3af"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          <Pressable style={styles.iconButton}>
-            <Ionicons name="barcode-outline" size={18} color="#374151" />
-          </Pressable>
-
-          <Pressable style={styles.iconButton}>
-            <Ionicons name="search-outline" size={18} color="#374151" />
-          </Pressable>
-        </View>
-      </View>
-    );
-  };
-
-  const Unidades = ({
-    qty,
-    price,
-    unit,
-  }: {
-    qty: string;
-    price: string;
-    unit: string;
-  }) => {
-    return (
-      <View style={styles.card}>
-        <Text style={styles.label}>Unidad</Text>
-
-        <View style={styles.unitRow}>
-          {UNITS.map((u) => {
-            const selected = unit === u;
-
-            return (
-              <Pressable
-                key={u}
-                style={[styles.pill, selected && styles.pillActive]}
-                onPress={() => setUnit(u)}
-              >
-                <Text
-                  style={[styles.pillText, selected && styles.pillTextActive]}
-                >
-                  {u}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View style={[styles.rowSpace, styles.sectionGapLarge]}>
-          <View style={styles.flex}>
-            <Text style={styles.label}>Cantidad ({unit})</Text>
-            <TextInput
-              style={styles.input}
-              value={qty}
-              onChangeText={(text) => setQty(sanitizeNumberInput(text))}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor="#9ca3af"
-            />
-          </View>
-
-          <View style={styles.flex}>
-            <Text style={styles.label}>Precio ({unit})</Text>
-            <TextInput
-              style={styles.input}
-              value={price}
-              onChangeText={(text) => setPrice(sanitizeNumberInput(text))}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor="#9ca3af"
-            />
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const PromotionList = ({
-    quantity,
-    unitPrice,
-    selectedPromo,
-    onSelect,
-  }: {
-    quantity: number;
-    unitPrice: number;
-    selectedPromo: Promotion;
-    onSelect: (p: Promotion) => void;
-  }) => {
-    return (
-      <View style={styles.promoWrap}>
-        {PROMOTIONS.map((option) => {
-          const promo = normalizePromotion(option.promo);
-
-          const validation = validatePromotion(promo, quantity, unitPrice);
-
-          const disabled = !validation.valid;
-          const selected = isSamePromotion(selectedPromo, promo);
-
-          return (
-            <Pressable
-              key={option.id}
-              onPress={() => {
-                if (disabled) return;
-                onSelect(promo);
-              }}
-              disabled={disabled}
-              style={[
-                styles.promoChip,
-                selected && styles.promoChipSelected,
-                disabled && styles.promoChipDisabled,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.promoChipText,
-                  selected && styles.promoChipTextSelected,
-                  disabled && styles.promoChipTextDisabled,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    );
-  };
-
-  const Ofertas = ({
-    quantity,
-    unitPrice,
-    selectedPromo,
-    onSelect,
-  }: {
-    quantity: number;
-    unitPrice: number;
-    selectedPromo: Promotion;
-    onSelect: (p: Promotion) => void;
-  }) => {
-    const promoValidation = validatePromotion(
-      selectedPromo,
-      quantity,
-      unitPrice,
-    );
-    return (
-      <View style={styles.card}>
-        <Text style={styles.label}>Ofertas</Text>
-        <PromotionList
-          quantity={quantity}
-          unitPrice={unitPrice}
-          selectedPromo={selectedPromo}
-          onSelect={onSelect}
-        />
-
-        {!promoValidation.valid && (
-          <View style={styles.offerWarningBox}>
-            <Text style={styles.offerWarning}>
-              {promoValidation.message ?? "Oferta no válida"}
-            </Text>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  const Summary = ({
-    base,
-    savings,
-    total,
-  }: {
-    base: number;
-    savings: number;
-    total: number;
-  }) => {
-    return (
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Resumen</Text>
-
-        <Text style={styles.summaryLine}>Base: {formatCurrency(base)}</Text>
-
-        <Text style={styles.summarySavings}>
-          Ahorro: {formatCurrency(savings)}
-        </Text>
-
-        <View style={styles.summaryTotalRow}>
-          <Text style={styles.summaryTotalLabel}>Total</Text>
-          <Text style={styles.summaryTotalValue}>{formatCurrency(total)}</Text>
-        </View>
-      </View>
-    );
-  };
-
-  const promoValidation = validatePromotion(promo, quantity, unitPrice);
-
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -361,20 +397,37 @@ export default function ItemDetailScreen() {
       >
         <ScrollView
           contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode="none"
           showsVerticalScrollIndicator={false}
         >
-          <Header title="Editar producto" />
-          <CardNombreBarcode nombre={"Nombre"} barcode={""} />
-          <Unidades qty={qty} price={price} unit={unit} />
+          <Header title="Editar producto" onBack={() => router.back()} />
 
-          {/* <PromotionSelector value={promo} onChange={setPromo} /> */}
+          <CardNombreBarcode
+            nameItem={nameItem}
+            barcodeItem={barcodeItem}
+            onChangeName={setNameItem}
+            onChangeBarcode={setBarcodeItem}
+            onScanner={handleScanner}
+            onSearch={handleSearch}
+          />
+
+          <Unidades
+            qty={qty}
+            price={price}
+            unit={unit}
+            onChangeQty={(text) => setQty(sanitizeNumberInput(text))}
+            onChangePrice={(text) => setPrice(sanitizeNumberInput(text))}
+            onChangeUnit={setUnit}
+          />
+
           <Ofertas
             quantity={quantity}
             unitPrice={unitPrice}
             selectedPromo={safePromo}
             onSelect={setPromo}
           />
+
           <Summary
             base={priceResult.baseTotal}
             savings={priceResult.savings}
@@ -444,12 +497,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
+
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: "#111827",
     marginBottom: 6,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -507,12 +562,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#111827",
   },
+
   promoWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
     marginTop: 8,
   },
+
   row: {
     flexDirection: "row",
     gap: 10,
@@ -538,6 +595,7 @@ const styles = StyleSheet.create({
     gap: 10,
     flexWrap: "wrap",
   },
+
   offerWarningBox: {
     marginTop: 10,
     backgroundColor: "#fff7ed",
@@ -547,11 +605,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
+
   offerWarning: {
     fontSize: 12,
     color: "#ea580c",
     fontWeight: "600",
   },
+
   pill: {
     minWidth: 40,
     paddingHorizontal: 14,
