@@ -288,7 +288,7 @@ function Summary({
 
 export default function ItemDetailScreen() {
   const { id, scannedBarcode } = useLocalSearchParams<{
-    id: string;
+    id?: string;
     scannedBarcode?: string;
   }>();
 
@@ -345,7 +345,7 @@ export default function ItemDetailScreen() {
 
   const handleScanner = () => {
     router.push({
-      pathname: "/(tabs)/barcode",
+      pathname: "/barcode",
       params: {
         id: item.id,
       },

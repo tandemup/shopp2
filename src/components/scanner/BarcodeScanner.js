@@ -1,13 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 export default function BarcodeScanner({
   onScanned,
   onCancel,
-  onReenable,
-  onStartScanning, // 🔥 NUEVO
+  onStartScanning,
   active = true,
   statusMessage = "",
   statusColor = "#2563eb",
@@ -16,27 +15,28 @@ export default function BarcodeScanner({
   const [scanningEnabled, setScanningEnabled] = useState(false);
   const [torch, setTorch] = useState(false);
 
-  // 🔍 Zoom
   const zoomLevels = [0, 0.2, 0.4];
-  const [zoomIndex, setZoomIndex] = useState(0);
-
-  const mounted = useRef(true);
+  const [zoomIndex, setZoomIndex] = useState(1);
 
   useEffect(() => {
-    mounted.current = true;
-    if (!permission) requestPermission();
-    return () => (mounted.current = false);
-  }, [permission]);
+    if (!permission) {
+      requestPermission();
+    }
+  }, [permission, requestPermission]);
 
   const handleBarcodeScanned = ({ data, type }) => {
-    if (!scanningEnabled || !active) return;
+    if (!active || !scanningEnabled) return;
 
-    // ✅ solo códigos válidos
     if (type !== "ean13" && type !== "upc_a") return;
 
     setScanningEnabled(false);
-
     onScanned?.({ type, data });
+  };
+
+  const resetScannerState = () => {
+    setScanningEnabled(false);
+    setTorch(false);
+    setZoomIndex(0);
   };
 
   if (!permission) {
@@ -79,7 +79,6 @@ export default function BarcodeScanner({
         }
       />
 
-      {/* 💬 Mensaje */}
       {statusMessage ? (
         <View
           style={{
@@ -98,7 +97,6 @@ export default function BarcodeScanner({
         </View>
       ) : null}
 
-      {/* 🎮 Controles */}
       <View
         style={{
           position: "absolute",
@@ -112,7 +110,6 @@ export default function BarcodeScanner({
           alignItems: "center",
         }}
       >
-        {/* 🔦 Linterna */}
         <Pressable
           style={styles.iconButton}
           onPress={() => setTorch((t) => !t)}
@@ -124,7 +121,6 @@ export default function BarcodeScanner({
           />
         </Pressable>
 
-        {/* 🔍 Zoom */}
         <Pressable
           style={styles.iconButton}
           onPress={() => setZoomIndex((i) => (i + 1) % zoomLevels.length)}
@@ -133,19 +129,29 @@ export default function BarcodeScanner({
           <Text style={{ color: "#fff", fontSize: 12 }}>{zoomIndex + 1}x</Text>
         </Pressable>
 
-        {/* 🎯 ESCANEAR */}
+        <Pressable
+          style={[
+            styles.scanButton,
+            scanningEnabled && styles.scanButtonActive,
+          ]}
+          onPress={() => {
+            onStartScanning?.();
+            setScanningEnabled(true);
+          }}
+        >
+          <MaterialCommunityIcons name="barcode-scan" size={24} color="#fff" />
+          <Text style={styles.scanButtonText}>
+            {scanningEnabled ? "Escaneando..." : "Escanear"}
+          </Text>
+        </Pressable>
+
         <Pressable
           style={styles.iconButton}
           onPress={() => {
-            setScanningEnabled(true);
-            onReenable?.(); // 🔥 importante
+            resetScannerState();
+            onCancel?.();
           }}
         >
-          <MaterialCommunityIcons name="barcode" size={26} color="#fff" />
-        </Pressable>
-
-        {/* ❌ Cerrar */}
-        <Pressable style={styles.iconButton} onPress={onCancel}>
           <MaterialCommunityIcons name="close" size={26} color="#fff" />
         </Pressable>
       </View>
@@ -166,10 +172,32 @@ const styles = {
     backgroundColor: "rgba(255,255,255,0.2)",
     alignItems: "center",
   },
+  scanButton: {
+    minWidth: 120,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: "#2563eb",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  scanButtonActive: {
+    backgroundColor: "#16a34a",
+  },
+  scanButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+  },
   primaryBtn: {
     padding: 10,
     borderRadius: 8,
     backgroundColor: "#FF3B30",
   },
-  primaryBtnText: { color: "#fff", fontWeight: "bold" },
+  primaryBtnText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
 };
