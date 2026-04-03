@@ -19,7 +19,6 @@ export default function ExploreStoresScreen() {
   const { stores, toggleFavorite } = useStores();
 
   const [search, setSearch] = useState("");
-  console.log("stores:", stores);
   /* ---------------------------------------------
      Filter stores
   ---------------------------------------------- */

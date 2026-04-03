@@ -77,8 +77,8 @@
     "address": "Calle Ezcurdia, 130, 33202 Gijón, Asturias",
     "zipcode": 33202,
     "location": {
-      "lat": 43.5426,
-      "lng": -5.6553,
+      "lat": 43.5381,
+      "lng": -5.6493,
       "source": "manual"
     },
     "favorite": false

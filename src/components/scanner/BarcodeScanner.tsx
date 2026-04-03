@@ -1,7 +1,34 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+
+type ZoomLevel = {
+  label: string;
+  value: number;
+};
+
+type BarcodeScannerProps = {
+  onScanned?: (payload: { type: string; data: string }) => void;
+  onCancel?: () => void;
+  onStartScanning?: () => void;
+  active?: boolean;
+  statusMessage?: string;
+  statusColor?: string;
+};
+
+const zoomLevels: ZoomLevel[] = [
+  { label: "1x", value: 0 },
+  { label: "1.2x", value: 0.2 },
+  { label: "1.5x", value: 0.5 },
+];
+
+const BARCODE_TYPES = ["ean13", "ean8", "upc_a", "upc_e"];
+
+/* 🔧 Helper seguro */
+const getZoomValue = (index: number) => {
+  return zoomLevels[index].value ?? zoomLevels[0].value;
+};
 
 export default function BarcodeScanner({
   onScanned,
@@ -10,33 +37,40 @@ export default function BarcodeScanner({
   active = true,
   statusMessage = "",
   statusColor = "#2563eb",
-}) {
+}: BarcodeScannerProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanningEnabled, setScanningEnabled] = useState(false);
   const [torch, setTorch] = useState(false);
-
-  const zoomLevels = [0, 0.2, 0.4];
   const [zoomIndex, setZoomIndex] = useState(1);
 
+  const scanLockRef = useRef(false);
+  const zoom = getZoomValue(zoomIndex);
+
   useEffect(() => {
-    if (!permission) {
+    if (permission && !permission.granted && permission.canAskAgain) {
       requestPermission();
     }
   }, [permission, requestPermission]);
 
-  const handleBarcodeScanned = ({ data, type }) => {
-    if (!active || !scanningEnabled) return;
-
-    if (type !== "ean13" && type !== "upc_a") return;
-
-    setScanningEnabled(false);
-    onScanned?.({ type, data });
-  };
-
   const resetScannerState = () => {
+    scanLockRef.current = false;
     setScanningEnabled(false);
     setTorch(false);
-    setZoomIndex(0);
+    setZoomIndex(1);
+  };
+
+  const handleBarcodeScanned = ({
+    data,
+    type,
+  }: {
+    data: string;
+    type: string | number;
+  }) => {
+    if (!active || !scanningEnabled || scanLockRef.current) return;
+
+    scanLockRef.current = true;
+    setScanningEnabled(false);
+    onScanned?.({ type: String(type), data });
   };
 
   if (!permission) {
@@ -55,7 +89,17 @@ export default function BarcodeScanner({
         </Text>
 
         <Pressable
-          style={[styles.primaryBtn, { backgroundColor: "#ef4444" }]}
+          style={[styles.primaryBtn, { backgroundColor: "#2563eb" }]}
+          onPress={() => requestPermission()}
+        >
+          <Text style={styles.primaryBtnText}>Permitir cámara</Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.primaryBtn,
+            { backgroundColor: "#ef4444", marginTop: 10 },
+          ]}
           onPress={onCancel}
         >
           <Text style={styles.primaryBtnText}>Cerrar</Text>
@@ -70,9 +114,9 @@ export default function BarcodeScanner({
         style={{ flex: 1 }}
         facing="back"
         enableTorch={torch}
-        zoom={zoomLevels[zoomIndex]}
+        zoom={zoom}
         barcodeScannerSettings={{
-          barcodeTypes: ["ean13", "upc_a"],
+          barcodeTypes: BARCODE_TYPES,
         }}
         onBarcodeScanned={
           active && scanningEnabled ? handleBarcodeScanned : undefined
@@ -81,38 +125,21 @@ export default function BarcodeScanner({
 
       {statusMessage ? (
         <View
-          style={{
-            position: "absolute",
-            top: 80,
-            alignSelf: "center",
-            backgroundColor: statusColor,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderRadius: 20,
-          }}
+          style={[
+            styles.statusBadge,
+            {
+              backgroundColor: statusColor,
+            },
+          ]}
         >
-          <Text style={{ color: "white", fontWeight: "bold" }}>
-            {statusMessage}
-          </Text>
+          <Text style={styles.statusText}>{statusMessage}</Text>
         </View>
       ) : null}
 
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: 16,
-          backgroundColor: "rgba(0,0,0,0.45)",
-          flexDirection: "row",
-          justifyContent: "space-around",
-          alignItems: "center",
-        }}
-      >
+      <View style={styles.bottomBar}>
         <Pressable
           style={styles.iconButton}
-          onPress={() => setTorch((t) => !t)}
+          onPress={() => setTorch((prev) => !prev)}
         >
           <MaterialCommunityIcons
             name={torch ? "flashlight" : "flashlight-off"}
@@ -123,10 +150,12 @@ export default function BarcodeScanner({
 
         <Pressable
           style={styles.iconButton}
-          onPress={() => setZoomIndex((i) => (i + 1) % zoomLevels.length)}
+          onPress={() => setZoomIndex((prev) => (prev + 1) % zoomLevels.length)}
         >
           <MaterialCommunityIcons name="magnify-plus" size={26} color="#fff" />
-          <Text style={{ color: "#fff", fontSize: 12 }}>{zoomIndex + 1}x</Text>
+          <Text style={styles.iconButtonText}>
+            {zoomLevels[zoomIndex].label}
+          </Text>
         </Pressable>
 
         <Pressable
@@ -135,13 +164,19 @@ export default function BarcodeScanner({
             scanningEnabled && styles.scanButtonActive,
           ]}
           onPress={() => {
+            if (scanningEnabled) {
+              resetScannerState();
+              return;
+            }
+
             onStartScanning?.();
+            scanLockRef.current = false;
             setScanningEnabled(true);
           }}
         >
           <MaterialCommunityIcons name="barcode-scan" size={24} color="#fff" />
           <Text style={styles.scanButtonText}>
-            {scanningEnabled ? "Escaneando..." : "Escanear"}
+            {scanningEnabled ? "Detener" : "Escanear"}
           </Text>
         </Pressable>
 
@@ -159,18 +194,47 @@ export default function BarcodeScanner({
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
   },
+  statusBadge: {
+    position: "absolute",
+    top: 80,
+    alignSelf: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  statusText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
   iconButton: {
     padding: 10,
     borderRadius: 50,
     backgroundColor: "rgba(255,255,255,0.2)",
     alignItems: "center",
+    minWidth: 56,
+  },
+  iconButtonText: {
+    color: "#fff",
+    fontSize: 12,
+    marginTop: 2,
   },
   scanButton: {
     minWidth: 120,
@@ -192,7 +256,8 @@ const styles = {
     fontSize: 14,
   },
   primaryBtn: {
-    padding: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 8,
     backgroundColor: "#FF3B30",
   },
@@ -200,4 +265,4 @@ const styles = {
     color: "#fff",
     fontWeight: "bold",
   },
-};
+});
