@@ -1,12 +1,13 @@
 // src/store/lists/useListsStore.ts
+import { storage } from "@/src/utils/storage/storage";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { Item } from "@/src/types/Item";
-import type { List } from "@/src/types/list";
+import type { List } from "@/src/types/List";
 import { generateId } from "@/src/utils/generateId";
+import { useSettingsStore } from "../settings/useSettingsStore";
 
 const toNumber = (v: any, fallback: number) => {
   const n = typeof v === "number" ? v : parseFloat(v);
@@ -53,7 +54,7 @@ export const useListsStore = create<ListsStore>()(
           id: generateId(),
           name: trimmed,
           createdAt: Date.now(),
-          currency: "EUR",
+          currency: useSettingsStore.getState().defaultCurrency,
           items: [],
           archived: false,
         };
@@ -213,7 +214,7 @@ export const useListsStore = create<ListsStore>()(
     }),
     {
       name: "shopp-lists-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => storage),
       partialize: (state) => ({
         lists: state.lists,
       }),

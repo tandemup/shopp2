@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { storage } from "@/src/utils/storage/storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -119,7 +119,7 @@ export const useStoresStore = create<StoresState>()(
     }),
     {
       name: "shopp-stores-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => storage),
       partialize: (state) => ({
         favoriteStoreIds: state.favoriteStoreIds,
       }),

@@ -1,4 +1,3 @@
-import { useConfig } from "@/src/context/ConfigContext";
 import { List } from "@/src/types/List";
 import { formatCurrency } from "@/src/utils/currency";
 import { calculateItemPrice } from "@/src/utils/pricing/pricing";
@@ -13,13 +12,6 @@ interface Props {
 }
 
 export default function ListCard({ list, onPress, onMenu }: Props) {
-  const { currency } = useConfig();
-  //  const currency = getCurrency(list.currency);
-
-  /* --------------------------------------------
-     Animación press
-  --------------------------------------------- */
-
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -36,20 +28,12 @@ export default function ListCard({ list, onPress, onMenu }: Props) {
     }).start();
   };
 
-  /* --------------------------------------------
-     Fecha
-  --------------------------------------------- */
-
   const createdAt =
     typeof list.createdAt === "number"
       ? new Date(list.createdAt)
-      : new Date(list.createdAt ?? Date.now());
+      : new Date(Date.now());
 
   const formattedDate = createdAt.toLocaleDateString();
-
-  /* --------------------------------------------
-     Totales optimizados
-  --------------------------------------------- */
 
   const { total, savings, itemCount } = useMemo(() => {
     return list.items.reduce(
@@ -59,22 +43,18 @@ export default function ListCard({ list, onPress, onMenu }: Props) {
         const price = calculateItemPrice(item);
 
         return {
-          total: acc.total + (isFinite(price.total) ? price.total : 0),
-          savings: acc.savings + (isFinite(price.savings) ? price.savings : 0),
+          total: acc.total + (Number.isFinite(price.total) ? price.total : 0),
+          savings:
+            acc.savings + (Number.isFinite(price.savings) ? price.savings : 0),
           itemCount: acc.itemCount + 1,
         };
       },
       { total: 0, savings: 0, itemCount: 0 },
     );
   }, [list.items]);
-
-  const formattedTotal = formatCurrency(total, currency);
-  const formattedSavings = formatCurrency(savings, currency);
+  const formattedTotal = formatCurrency(total, { currency: list.currency });
+  const formattedSavings = formatCurrency(savings, { currency: list.currency });
   const hasSavings = savings > 0;
-
-  /* --------------------------------------------
-     Render
-  --------------------------------------------- */
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
@@ -85,13 +65,12 @@ export default function ListCard({ list, onPress, onMenu }: Props) {
         style={[styles.card, hasSavings && styles.cardHighlight]}
       >
         <View style={styles.header}>
-          {/* LEFT */}
           <View style={styles.left}>
             <View style={styles.nameRow}>
               <Text style={styles.listName}>{list.name}</Text>
 
               <View style={styles.currencyBadge}>
-                <Text style={styles.currencyText}>{currency}</Text>
+                <Text style={styles.currencyText}>{list.currency}</Text>
               </View>
             </View>
 
@@ -100,7 +79,6 @@ export default function ListCard({ list, onPress, onMenu }: Props) {
             </Text>
           </View>
 
-          {/* RIGHT */}
           <View style={styles.right}>
             <Pressable onPress={onMenu} style={styles.menu}>
               <Ionicons name="ellipsis-vertical" size={18} color="#555" />
@@ -110,7 +88,6 @@ export default function ListCard({ list, onPress, onMenu }: Props) {
           </View>
         </View>
 
-        {/* SAVINGS */}
         {hasSavings && (
           <Text style={styles.savings}>💸 Ahorro {formattedSavings}</Text>
         )}
@@ -118,10 +95,6 @@ export default function ListCard({ list, onPress, onMenu }: Props) {
     </Animated.View>
   );
 }
-
-/* --------------------------------------------
-   Styles
---------------------------------------------- */
 
 const styles = StyleSheet.create({
   card: {
@@ -131,7 +104,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 6,
@@ -153,7 +125,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  /* 🔥 CORRECTO: agrupado, no separado */
   nameRow: {
     flexDirection: "row",
     alignItems: "center",
