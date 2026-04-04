@@ -3,25 +3,42 @@ import { useEffect } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { StoreCard } from "@/src/components/stores/StoreCard";
-import { useLists } from "@/src/context/ListsContext";
-import type { Store } from "@/src/context/StoresContext";
-import { useStores } from "@/src/context/StoresContext";
+import { useListsStore } from "@/src/store/lists/useListsStore";
+import { selectFavorites } from "@/src/store/stores/selectors";
+import type { Store } from "@/src/store/stores/useStoresStore";
+import { useStoresStore } from "@/src/store/stores/useStoresStore";
 
 export default function StoreFavoritesScreen() {
   const router = useRouter();
-  const { assignStoreToList } = useLists();
 
-  const { mode, selectForListId } = useLocalSearchParams();
+  const assignStoreToList = useListsStore((s) => s.assignStoreToList);
+  const hasHydrated = useStoresStore((s) => s.hasHydrated);
+  const favorites = useStoresStore(selectFavorites);
+  const toggleFavorite = useStoresStore((s) => s.toggleFavorite);
+
+  const params = useLocalSearchParams();
+  const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
+  const selectForListId = Array.isArray(params.selectForListId)
+    ? params.selectForListId[0]
+    : params.selectForListId;
+  const returnTo = Array.isArray(params.returnTo)
+    ? params.returnTo[0]
+    : params.returnTo;
+
   const isSelectMode = mode === "select";
-  const { favorites, toggleFavorite } = useStores();
-  const { returnTo } = useLocalSearchParams();
 
   const handleSelectStore = (store: Store) => {
     if (isSelectMode && selectForListId) {
       assignStoreToList(String(selectForListId), store.id);
 
-      router.replace(returnTo as string);
-      //router.back();
+      if (returnTo && typeof returnTo === "string") {
+        router.replace(returnTo as any);
+      } else {
+        router.replace({
+          pathname: "/list/[id]",
+          params: { id: String(selectForListId) },
+        });
+      }
       return;
     }
 
@@ -31,24 +48,19 @@ export default function StoreFavoritesScreen() {
     });
   };
 
-  /* -------------------------------
-     Redirect si no hay favoritas
-  -------------------------------- */
   useEffect(() => {
-    if (isSelectMode && favorites.length === 0) {
+    if (isSelectMode && hasHydrated && favorites.length === 0) {
       router.replace({
         pathname: "/storefront/explore",
         params: {
           mode: "select",
           selectForListId,
+          ...(returnTo ? { returnTo } : {}),
         },
       });
     }
-  }, [favorites, isSelectMode, selectForListId, router]);
+  }, [favorites, hasHydrated, isSelectMode, selectForListId, returnTo, router]);
 
-  /* -------------------------------
-     Render item
-  -------------------------------- */
   const renderItem = ({ item }: { item: Store }) => (
     <StoreCard
       store={item}
@@ -57,9 +69,10 @@ export default function StoreFavoritesScreen() {
     />
   );
 
-  /* -------------------------------
-     Empty state
-  -------------------------------- */
+  if (!hasHydrated) {
+    return null;
+  }
+
   if (favorites.length === 0) {
     return (
       <View style={styles.empty}>
@@ -73,6 +86,15 @@ export default function StoreFavoritesScreen() {
           onPress={() =>
             router.push({
               pathname: "/storefront/explore",
+              ...(isSelectMode
+                ? {
+                    params: {
+                      mode: "select",
+                      selectForListId,
+                      ...(returnTo ? { returnTo } : {}),
+                    },
+                  }
+                : {}),
             })
           }
         >
@@ -82,9 +104,6 @@ export default function StoreFavoritesScreen() {
     );
   }
 
-  /* -------------------------------
-     List
-  -------------------------------- */
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Favoritas</Text>
@@ -99,10 +118,6 @@ export default function StoreFavoritesScreen() {
     </View>
   );
 }
-
-/* ===============================
-   Styles
-================================ */
 
 const styles = StyleSheet.create({
   container: {

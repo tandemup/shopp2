@@ -1,31 +1,32 @@
-import { useLists } from "@/src/context/ListsContext";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 export function useStoreSelection() {
   const router = useRouter();
-  const { mode, selectForListId } = useLocalSearchParams();
-  const { assignStoreToList } = useLists();
+  const params = useLocalSearchParams();
+
+  const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
+  const selectForListId = Array.isArray(params.selectForListId)
+    ? params.selectForListId[0]
+    : params.selectForListId;
+  const returnTo = Array.isArray(params.returnTo)
+    ? params.returnTo[0]
+    : params.returnTo;
 
   const isSelectMode = mode === "select";
 
-  const handleSelectStore = (store) => {
-    if (isSelectMode && selectForListId) {
-      // 👉 en vez de seleccionar directamente → abrimos detail
-      router.push({
-        pathname: "/storefront/[id]/info",
-        params: {
-          id: store.id,
-          mode: "select",
-          selectForListId,
-        },
-      });
-      return;
-    }
-
-    // 👉 modo normal → abrir detail
+  const handleSelectStore = (store: { id: string }) => {
     router.push({
-      pathname: "/storefront/[id]/info",
-      params: { id: store.id },
+      pathname: "/storefront/info",
+      params: {
+        id: store.id,
+        ...(isSelectMode
+          ? {
+              mode: "select",
+              selectForListId,
+              returnTo,
+            }
+          : {}),
+      },
     });
   };
 

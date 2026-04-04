@@ -1,0 +1,1 @@
+    "@react-native-async-storage/async-storage": "2.2.0",

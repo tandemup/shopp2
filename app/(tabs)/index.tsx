@@ -14,42 +14,32 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import ListCard from "@/src/components/lists/ListCard";
 import { actionSheet } from "@/src/components/ui/dialog/dialog";
-//import { promptDialog } from "@/src/components/ui/dialog/dialog";
-import { useLists } from "@/src/context/ListsContext";
+import { useListsStore } from "@/src/store/lists/useListsStore";
 
 export default function ShoppingListsScreen() {
   const router = useRouter();
-  const { lists, addList, deleteList, archiveList, updateList } = useLists();
-  const [name, setName] = useState("");
 
-  /* -------------------------------------------------
-     Crear nueva lista
-  -------------------------------------------------- */
+  const lists = useListsStore((s) => s.lists);
+  const hasHydrated = useListsStore((s) => s.hasHydrated);
+  const addList = useListsStore((s) => s.addList);
+  const deleteList = useListsStore((s) => s.deleteList);
+  const archiveList = useListsStore((s) => s.archiveList);
+  const updateList = useListsStore((s) => s.updateList);
+
+  const [name, setName] = useState("");
 
   const handleAddList = () => {
     if (!name.trim()) return;
-
     addList(name.trim());
     setName("");
   };
-
-  /* -------------------------------------------------
-     Abrir lista
-  -------------------------------------------------- */
 
   const handleOpenList = (id: string) => {
     router.push(`/list/${id}`);
   };
 
-  /* -------------------------------------------------
-     Editar lista
-  -------------------------------------------------- */
   const handleEditList = async (list: any) => {
-    const newName = await prompt(
-      "Editar nombre",
-      "Introduce el nuevo nombre",
-      list.name,
-    );
+    const newName = await prompt("Editar nombre", "Introduce el nuevo nombre");
 
     if (!newName || !newName.trim()) return;
 
@@ -58,47 +48,37 @@ export default function ShoppingListsScreen() {
     });
   };
 
-  /* -------------------------------------------------
-     Menú contextual
-  -------------------------------------------------- */
   const openMenu = async (list: any) => {
     const index = await actionSheet(list.name, [
-      { text: "Abrir" }, // 0
-      { text: "Archivar" }, // 1
-      { text: "Editar nombre" }, // 2
-      { text: "Eliminar", style: "destructive" }, // 3
-      { text: "Cancelar", style: "cancel" }, // 4
+      { text: "Abrir" },
+      { text: "Archivar" },
+      { text: "Editar nombre" },
+      { text: "Eliminar", style: "destructive" },
+      { text: "Cancelar", style: "cancel" },
     ]);
 
     if (index === 0) {
       handleOpenList(list.id);
     } else if (index === 1) {
-      archiveList?.(list.id);
+      archiveList(list.id);
     } else if (index === 2) {
       handleEditList(list);
     } else if (index === 3) {
-      deleteList?.(list.id);
+      deleteList(list.id);
     }
   };
-  /* -------------------------------------------------
-     Ordenar listas
-  -------------------------------------------------- */
 
   const sortedLists = [...lists].sort(
     (a: any, b: any) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
-  /* -------------------------------------------------
-     Render
-  -------------------------------------------------- */
+  if (!hasHydrated) return null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.title}>Mis listas</Text>
-
-        {/* -------- Nueva lista -------- */}
 
         <View style={styles.inputRow}>
           <TextInput
@@ -114,8 +94,6 @@ export default function ShoppingListsScreen() {
             <Ionicons name="add" size={22} color="#16a34a" />
           </Pressable>
         </View>
-
-        {/* -------- Listado -------- */}
 
         <FlatList
           keyboardShouldPersistTaps="handled"
@@ -144,10 +122,6 @@ export default function ShoppingListsScreen() {
     </SafeAreaView>
   );
 }
-
-/* -------------------------------------------------
-   Styles
--------------------------------------------------- */
 
 const styles = StyleSheet.create({
   safeArea: {

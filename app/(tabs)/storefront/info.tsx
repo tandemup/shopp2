@@ -1,6 +1,6 @@
 import StoreMapPreview from "@/src/components/stores/StoreMapPreview";
-import { useLists } from "@/src/context/ListsContext";
-import { useStores } from "@/src/context/StoresContext";
+import { useListsStore } from "@/src/store/lists/useListsStore";
+import { useStoresStore } from "@/src/store/stores/useStoresStore";
 import { getValidCoords } from "@/src/utils/maps/getValidCoords";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -15,30 +15,31 @@ import {
 } from "react-native";
 
 export default function StoreDetailScreen() {
-  /* ---------------------------------------------
-     Params seguros (expo-router)
-  ---------------------------------------------- */
   const params = useLocalSearchParams();
-  const { id } = useLocalSearchParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
   const selectForListId = Array.isArray(params.selectForListId)
     ? params.selectForListId[0]
     : params.selectForListId;
+  const returnTo = Array.isArray(params.returnTo)
+    ? params.returnTo[0]
+    : params.returnTo;
 
   const router = useRouter();
 
-  /* ---------------------------------------------
-     Contexts
-  ---------------------------------------------- */
-  const { getStoreById, toggleFavorite, isFavorite } = useStores();
-  const { assignStoreToList } = useLists();
+  const hasHydrated = useStoresStore((s) => s.hasHydrated);
+  const getStoreById = useStoresStore((s) => s.getStoreById);
+  const toggleFavorite = useStoresStore((s) => s.toggleFavorite);
+  const isFavorite = useStoresStore((s) => s.isFavorite);
 
-  /* ---------------------------------------------
-     Data
-  ---------------------------------------------- */
-  const store = getStoreById(id as string);
+  const assignStoreToList = useListsStore((s) => s.assignStoreToList);
 
+  const store = id ? getStoreById(id) : undefined;
   const coords = useMemo(() => (store ? getValidCoords(store) : null), [store]);
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   if (!store) {
     return (
@@ -48,21 +49,24 @@ export default function StoreDetailScreen() {
     );
   }
 
-  const isFav = isFavorite(store.id);
+  const favorite = isFavorite(store.id);
 
-  /* ---------------------------------------------
-     Actions
-  ---------------------------------------------- */
   const handleToggleFavorite = () => {
     toggleFavorite(store.id);
   };
 
   const handleSelectStore = () => {
     if (mode === "select" && selectForListId) {
-      assignStoreToList(selectForListId as string, store.id);
+      assignStoreToList(String(selectForListId), store.id);
 
-      // 👇 IMPORTANTE: volver correctamente a la lista
-      router.replace(`/list/${selectForListId}`);
+      if (returnTo && typeof returnTo === "string") {
+        router.replace(returnTo as any);
+      } else {
+        router.replace({
+          pathname: "/list/[id]",
+          params: { id: String(selectForListId) },
+        });
+      }
     }
   };
 
@@ -80,9 +84,6 @@ export default function StoreDetailScreen() {
     Linking.openURL(url);
   };
 
-  /* ---------------------------------------------
-     Render
-  ---------------------------------------------- */
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
@@ -92,9 +93,9 @@ export default function StoreDetailScreen() {
 
         <Pressable onPress={handleToggleFavorite} hitSlop={10}>
           <Ionicons
-            name={isFav ? "star" : "star-outline"}
+            name={favorite ? "star" : "star-outline"}
             size={26}
-            color={isFav ? "#f5c518" : "#bbb"}
+            color={favorite ? "#f5c518" : "#bbb"}
           />
         </Pressable>
       </View>
@@ -125,18 +126,12 @@ export default function StoreDetailScreen() {
           </View>
         )}
 
-        <Pressable
-          style={styles.osmButton}
-          onPress={() => openInOpenStreetMap(store)}
-        >
+        <Pressable style={styles.osmButton} onPress={openInOpenStreetMap}>
           <Ionicons name="map-outline" size={18} color="#1a73e8" />
           <Text style={styles.osmButtonText}>Ver mapa (OpenStreetMap)</Text>
         </Pressable>
 
-        <Pressable
-          style={styles.mapsButton}
-          onPress={() => openInGoogleMaps(store)}
-        >
+        <Pressable style={styles.mapsButton} onPress={openInGoogleMaps}>
           <Ionicons name="navigate-outline" size={18} color="#fff" />
           <Text style={styles.mapsButtonText}>Abrir en Google Maps</Text>
         </Pressable>
@@ -157,9 +152,6 @@ export default function StoreDetailScreen() {
   );
 }
 
-/* -------------------------------------------------
-   Styles
--------------------------------------------------- */
 const styles = StyleSheet.create({
   container: {
     padding: 16,
@@ -231,6 +223,23 @@ const styles = StyleSheet.create({
     color: "#777",
   },
 
+  osmButton: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#eef4ff",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+
+  osmButtonText: {
+    marginLeft: 8,
+    color: "#1a73e8",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
   mapsButton: {
     flexDirection: "row",
     justifyContent: "center",
@@ -262,34 +271,14 @@ const styles = StyleSheet.create({
   },
 
   sectionMuted: {
-    marginTop: 16,
+    marginTop: 20,
     padding: 12,
-    backgroundColor: "#fafafa",
-    borderRadius: 8,
+    borderRadius: 10,
+    backgroundColor: "#f8f8f8",
   },
 
   mutedText: {
+    color: "#666",
     fontSize: 13,
-    color: "#888",
-    textAlign: "center",
-  },
-
-  osmButton: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: "#1a73e8",
-    marginBottom: 10,
-  },
-
-  osmButtonText: {
-    marginLeft: 8,
-    color: "#1a73e8",
-    fontSize: 14,
-    fontWeight: "600",
   },
 });

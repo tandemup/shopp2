@@ -1,17 +1,18 @@
+// app/list/[id].tsx
+
 import ItemRow from "@/src/components/items/ItemRow";
 import FooterTotal from "@/src/components/shopping/FooterTotal";
 import SearchCombinedBar from "@/src/components/shopping/SearchCombinedBar";
 import StoreSelector from "@/src/components/stores/StoreSelector";
-import { useLists } from "@/src/context/ListsContext";
-import { useStores } from "@/src/context/StoresContext";
+import { useListsStore } from "@/src/store/lists/useListsStore";
+import { useStoresStore } from "@/src/store/stores/useStoresStore";
 import type { Item } from "@/src/types/Item";
 import { calculateItemPrice } from "@/src/utils/pricing/pricing";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
-function makeNewItem(name: string): Item {
+function makeNewItem(name: string): Partial<Item> {
   return {
-    id: `item-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
     name: name.trim(),
     unit: "u",
     quantity: 1,
@@ -24,8 +25,19 @@ function makeNewItem(name: string): Item {
 export default function ShoppingListScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getList, addItem, toggleItem } = useLists();
-  const { getStoreById } = useStores();
+
+  const hasHydratedLists = useListsStore((s) => s.hasHydrated);
+  const hasHydratedStores = useStoresStore((s) => s.hasHydrated);
+
+  const getList = useListsStore((s) => s.getList);
+  const addItem = useListsStore((s) => s.addItem);
+  const toggleItem = useListsStore((s) => s.toggleItem);
+
+  const getStoreById = useStoresStore((s) => s.getStoreById);
+
+  if (!hasHydratedLists || !hasHydratedStores) {
+    return null;
+  }
 
   const list = getList(id);
 

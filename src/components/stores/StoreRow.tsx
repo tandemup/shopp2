@@ -1,7 +1,8 @@
-import { useStores } from "@/src/context/StoresContext";
-import { Store } from "@/src/types/Store";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import type { Store } from "@/src/store/stores/useStoresStore";
+import { useStoresStore } from "@/src/store/stores/useStoresStore";
 
 type Props = {
   store: Store;
@@ -9,22 +10,33 @@ type Props = {
 };
 
 export default function StoreRow({ store, onPress }: Props) {
-  const { toggleFavorite } = useStores();
+  const toggleFavorite = useStoresStore((s) => s.toggleFavorite);
+  const isFavorite = useStoresStore((s) => s.isFavorite);
+
+  const favorite = isFavorite(store.id);
 
   return (
-    <Pressable onPress={onPress} style={{ padding: 12 }}>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: "600" }}>{store.name}</Text>
+    <Pressable style={styles.container} onPress={onPress}>
+      <View style={styles.content}>
+        <View style={styles.textWrap}>
+          <Text style={styles.name}>{store.name}</Text>
 
-          <Text style={{ color: "#666" }}>{store.address}</Text>
+          {!!store.address && (
+            <Text style={styles.address}>{store.address}</Text>
+          )}
+
+          {!!store.city && <Text style={styles.city}>{store.city}</Text>}
         </View>
 
-        <Pressable onPress={() => toggleFavorite(store.id)}>
+        <Pressable
+          style={styles.starButton}
+          onPress={() => toggleFavorite(store.id)}
+          hitSlop={10}
+        >
           <Ionicons
-            name={store.isFavorite ? "star" : "star-outline"}
+            name={favorite ? "star" : "star-outline"}
             size={20}
-            color="#f1c40f"
+            color={favorite ? "#f5c518" : "#9ca3af"}
           />
         </Pressable>
       </View>
@@ -34,38 +46,46 @@ export default function StoreRow({ store, onPress }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "white",
-    padding: 14,
+    backgroundColor: "#fff",
     borderRadius: 12,
+    padding: 12,
     marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
 
-  textContainer: {
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  textWrap: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 12,
   },
 
   name: {
     fontSize: 16,
     fontWeight: "600",
+    color: "#111827",
     marginBottom: 2,
   },
 
   address: {
-    fontSize: 13,
-    color: "#555",
+    fontSize: 14,
+    color: "#4b5563",
   },
 
   city: {
-    fontSize: 12,
-    color: "#888",
+    fontSize: 13,
+    color: "#6b7280",
+    marginTop: 2,
+  },
+
+  starButton: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

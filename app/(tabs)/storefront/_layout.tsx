@@ -6,6 +6,7 @@ export default function StorefrontLayout() {
       <Stack.Screen name="index" options={{ title: "Tiendas" }} />
       <Stack.Screen name="explore" options={{ title: "Explorar tiendas" }} />
       <Stack.Screen name="favorites" options={{ title: "Favoritas" }} />
+      <Stack.Screen name="info" options={{ title: "Detalle de tienda" }} />
     </Stack>
   );
 }

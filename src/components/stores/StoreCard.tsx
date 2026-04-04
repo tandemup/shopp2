@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { Store } from "@/src/context/StoresContext";
+import type { Store } from "@/src/store/stores/useStoresStore";
 
 type Props = {
   store: Store;

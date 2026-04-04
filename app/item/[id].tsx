@@ -1,7 +1,7 @@
 import UNITS from "@/data/units.json";
 import { alert, confirm } from "@/src/components/ui/dialog/dialog";
 import { PROMOTIONS } from "@/src/constants/promotions";
-import { useLists } from "@/src/context/ListsContext";
+import { useListsStore } from "@/src/store/lists/useListsStore";
 import type { Promotion } from "@/src/types/Promotion";
 import { formatCurrency } from "@/src/utils/currency";
 import { isSamePromotion } from "@/src/utils/pricing/isSamePromotion";
@@ -293,9 +293,13 @@ export default function ItemDetailScreen() {
   }>();
 
   const router = useRouter();
-  const { findItemById, updateItem, removeItem } = useLists();
 
-  const found = findItemById(id);
+  const hasHydrated = useListsStore((s) => s.hasHydrated);
+  const findItemById = useListsStore((s) => s.findItemById);
+  const updateItem = useListsStore((s) => s.updateItem);
+  const removeItem = useListsStore((s) => s.removeItem);
+
+  const found = id ? findItemById(id) : null;
   const item = found?.item;
   const list = found?.list;
 
@@ -330,6 +334,10 @@ export default function ItemDetailScreen() {
   const priceResult = useMemo(() => {
     return calculateItemPrice({ quantity, unitPrice, promo: safePromo });
   }, [quantity, unitPrice, safePromo]);
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   if (!item || !list) {
     return (
@@ -518,15 +526,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  headerSpacer: {
-    width: 28,
-    height: 28,
-  },
-
   title: {
     fontSize: 20,
     fontWeight: "700",
     color: "#111827",
+  },
+
+  headerSpacer: {
+    width: 28,
+    height: 28,
   },
 
   card: {
@@ -534,229 +542,226 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#ececec",
+    borderColor: "#e5e7eb",
   },
 
   label: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#666",
-    marginBottom: 6,
+    color: "#374151",
+    marginBottom: 8,
   },
 
   sectionGap: {
-    marginTop: 12,
-  },
-
-  sectionGapLarge: {
     marginTop: 14,
   },
 
-  input: {
-    backgroundColor: "#f7f7f8",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: "#eee",
-    fontSize: 15,
-    color: "#111827",
+  sectionGapLarge: {
+    marginTop: 16,
   },
 
-  promoWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 8,
+  input: {
+    backgroundColor: "#f9fafb",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#111827",
   },
 
   row: {
     flexDirection: "row",
-    gap: 10,
     alignItems: "center",
+    gap: 8,
   },
 
   rowSpace: {
     flexDirection: "row",
+    alignItems: "flex-start",
     gap: 12,
   },
-
   iconButton: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
     borderRadius: 12,
-    backgroundColor: "#f0f0f0",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
   },
 
   unitRow: {
     flexDirection: "row",
-    gap: 10,
     flexWrap: "wrap",
-  },
-
-  offerWarningBox: {
-    marginTop: 10,
-    backgroundColor: "#fff7ed",
-    borderWidth: 1,
-    borderColor: "#fed7aa",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-
-  offerWarning: {
-    fontSize: 12,
-    color: "#ea580c",
-    fontWeight: "600",
+    gap: 8,
   },
 
   pill: {
-    minWidth: 40,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: "#f3f4f6",
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    backgroundColor: "#fff",
   },
 
   pillActive: {
-    backgroundColor: "#111",
+    backgroundColor: "#111827",
+    borderColor: "#111827",
   },
 
   pillText: {
-    color: "#6b7280",
+    fontSize: 13,
     fontWeight: "600",
+    color: "#374151",
   },
 
   pillTextActive: {
     color: "#fff",
   },
 
-  promoRow: {
+  promoWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+    marginTop: 2,
   },
 
   promoChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderRadius: 999,
-    backgroundColor: "#f1f1f3",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    backgroundColor: "#fff",
   },
 
   promoChipSelected: {
-    backgroundColor: "#111",
+    backgroundColor: "#fef3c7",
+    borderColor: "#f59e0b",
   },
 
   promoChipDisabled: {
-    backgroundColor: "#f3f4f6",
-    opacity: 0.6,
+    opacity: 0.45,
   },
 
   promoChipText: {
-    color: "#374151",
     fontSize: 13,
     fontWeight: "600",
+    color: "#374151",
   },
 
   promoChipTextSelected: {
-    color: "#fff",
+    color: "#92400e",
   },
 
   promoChipTextDisabled: {
     color: "#9ca3af",
   },
 
+  offerWarningBox: {
+    marginTop: 12,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: "#fff7ed",
+    borderWidth: 1,
+    borderColor: "#fdba74",
+  },
+
+  offerWarning: {
+    color: "#9a3412",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+
   summaryCard: {
     backgroundColor: "#fff",
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#e5e7eb",
   },
 
   summaryTitle: {
+    fontSize: 15,
     fontWeight: "700",
-    fontSize: 17,
-    marginBottom: 10,
     color: "#111827",
+    marginBottom: 10,
   },
 
   summaryLine: {
     fontSize: 14,
-    color: "#6b7280",
+    color: "#374151",
+    marginBottom: 6,
   },
 
   summarySavings: {
     fontSize: 14,
+    color: "#16a34a",
     fontWeight: "600",
-    color: "#22c55e",
-    marginTop: 2,
+    marginBottom: 10,
   },
 
   summaryTotalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
   },
 
   summaryTotalLabel: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#374151",
+    fontWeight: "700",
+    color: "#111827",
   },
 
   summaryTotalValue: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "800",
     color: "#111827",
   },
 
   warning: {
-    color: "#f59e0b",
-    marginTop: -6,
+    color: "#b45309",
     fontSize: 13,
     fontWeight: "600",
+    marginTop: -4,
   },
 
   actions: {
-    marginTop: 8,
-    gap: 12,
+    gap: 10,
+    marginTop: 4,
   },
 
   saveButton: {
-    backgroundColor: "#2f6df6",
-    padding: 16,
+    backgroundColor: "#16a34a",
+    paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
+    justifyContent: "center",
   },
 
   saveText: {
     color: "#fff",
-    fontWeight: "600",
+    fontWeight: "700",
     fontSize: 15,
   },
 
   deleteButton: {
-    borderWidth: 1.5,
-    borderColor: "#ef4444",
-    padding: 16,
-    borderRadius: 14,
-    alignItems: "center",
     backgroundColor: "#fff",
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#ef4444",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   deleteText: {
-    color: "#ef4444",
-    fontWeight: "600",
+    color: "#dc2626",
+    fontWeight: "700",
     fontSize: 15,
   },
 });
