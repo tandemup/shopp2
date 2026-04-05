@@ -1,4 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+//src/store/settings/useSettingsStore.tsx
+//src/utils/storage/storage.ts
+
+import { storage } from "@/src/utils/storage/storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -33,7 +36,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "shopp-settings-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => storage),
       partialize: (state) => ({
         defaultCurrency: state.defaultCurrency,
       }),

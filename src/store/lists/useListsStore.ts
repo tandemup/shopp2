@@ -4,10 +4,10 @@ import { storage } from "@/src/utils/storage/storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import { useSettingsStore } from "@/src/store/settings/useSettingsStore";
 import type { Item } from "@/src/types/Item";
 import type { List } from "@/src/types/List";
 import { generateId } from "@/src/utils/generateId";
-import { useSettingsStore } from "../settings/useSettingsStore";
 
 const toNumber = (v: any, fallback: number) => {
   const n = typeof v === "number" ? v : parseFloat(v);
