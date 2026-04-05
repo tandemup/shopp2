@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { Item } from "@/src/types/Item";
-import type { List } from "@/src/types/List";
+//import type { List } from "@/src/types/List";
 import { generateId } from "@/src/utils/generateId";
 import { useSettingsStore } from "../settings/useSettingsStore";
 
