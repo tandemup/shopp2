@@ -1,7 +1,7 @@
-import StoreMapPreview from "@/src/components/stores/StoreMapPreview";
-import { useListsStore } from "@/src/store/lists/useListsStore";
-import { useStoresStore } from "@/src/store/stores/useStoresStore";
-import { getValidCoords } from "@/src/utils/maps/getValidCoords";
+import StoreMapPreview from "../../../src/components/stores/StoreMapPreview";
+import { useListsStore } from "../../../src/store/lists/useListsStore";
+import { useStoresStore } from "../../../src/store/stores/useStoresStore";
+import { getValidCoords } from "../../../src/utils/maps/getValidCoords";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";

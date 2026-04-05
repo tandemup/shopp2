@@ -1,8 +1,8 @@
-import { storage } from "@/src/utils/storage/storage";
+import { storage } from "../../utils/storage/storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import storesData from "@/data/stores.json";
+import storesData from "../../../data/stores.json";
 
 export type StoreLocation = {
   lat: number;

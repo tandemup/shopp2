@@ -1,11 +1,11 @@
 //src/store/settings/useSettingsStore.tsx
 //src/utils/storage/storage.ts
 
-import { storage } from "@/src/utils/storage/storage";
+import { storage } from "../../utils/storage/storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { Currency } from "@/src/types/Currency";
+import type { Currency } from "../../types/Currency";
 
 export type SettingsState = {
   defaultCurrency: Currency;

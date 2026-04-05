@@ -1,6 +1,6 @@
-import DialogProvider from "@/src/components/ui/dialog/DialogProvider";
-import { LocationProvider } from "@/src/context/LocationContext";
-import { ThemeProvider } from "@/src/hooks/useTheme";
+import DialogProvider from "../src/components/ui/dialog/DialogProvider";
+import { LocationProvider } from "../src/context/LocationContext";
+import { ThemeProvider } from "../src/hooks/useTheme";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 

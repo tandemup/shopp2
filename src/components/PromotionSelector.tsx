@@ -1,11 +1,11 @@
-import type { Promotion } from "@/src/types/Promotion";
+import type { Promotion } from "../types/Promotion";
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 // 👉 IMPORTA estas funciones (las que ya definimos)
 
-import { isSamePromotion } from "@/src/utils/pricing/isSamePromotion";
-import { normalizePromotion } from "@/src/utils/pricing/pricing";
+import { isSamePromotion } from "../utils/pricing/isSamePromotion";
+import { normalizePromotion } from "../utils/pricing/pricing";
 
 type Props = {
   value?: Promotion;

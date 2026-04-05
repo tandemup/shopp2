@@ -1,13 +1,13 @@
 // app/list/[id].tsx
 
-import ItemRow from "@/src/components/items/ItemRow";
-import FooterTotal from "@/src/components/shopping/FooterTotal";
-import SearchCombinedBar from "@/src/components/shopping/SearchCombinedBar";
-import StoreSelector from "@/src/components/stores/StoreSelector";
-import { useListsStore } from "@/src/store/lists/useListsStore";
-import { useStoresStore } from "@/src/store/stores/useStoresStore";
-import type { Item } from "@/src/types/Item";
-import { calculateItemPrice } from "@/src/utils/pricing/pricing";
+import ItemRow from "../../src/components/items/ItemRow";
+import FooterTotal from "../../src/components/shopping/FooterTotal";
+import SearchCombinedBar from "../../src/components/shopping/SearchCombinedBar";
+import StoreSelector from "../../src/components/stores/StoreSelector";
+import { useListsStore } from "../../src/store/lists/useListsStore";
+import { useStoresStore } from "../../src/store/stores/useStoresStore";
+import type { Item } from "../../src/types/Item";
+import { calculateItemPrice } from "../../src/utils/pricing/pricing";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 

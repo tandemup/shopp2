@@ -12,9 +12,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import ListCard from "@/src/components/lists/ListCard";
-import { actionSheet } from "@/src/components/ui/dialog/dialog";
-import { useListsStore } from "@/src/store/lists/useListsStore";
+import ListCard from "../../src/components/lists/ListCard";
+import { actionSheet } from "../../src/components/ui/dialog/dialog";
+import { useListsStore } from "../../src/store/lists/useListsStore";
 
 export default function ShoppingListsScreen() {
   const router = useRouter();

@@ -1,6 +1,6 @@
-import { List } from "@/src/types/List";
-import { formatCurrency } from "@/src/utils/currency";
-import { calculateItemPrice } from "@/src/utils/pricing/pricing";
+import { List } from "../../types/List";
+import { formatCurrency } from "../../utils/currency";
+import { calculateItemPrice } from "../../utils/pricing/pricing";
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useRef } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";

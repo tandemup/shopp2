@@ -2,10 +2,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { StoreCard } from "@/src/components/stores/StoreCard";
-import { useStoreSelection } from "@/src/hooks/useStoreSelection";
-import type { Store } from "@/src/store/stores/useStoresStore";
-import { useStoresStore } from "@/src/store/stores/useStoresStore";
+import { StoreCard } from "../../../src/components/stores/StoreCard";
+import { useStoreSelection } from "../../../src/hooks/useStoreSelection";
+import type { Store } from "../../../src/store/stores/useStoresStore";
+import { useStoresStore } from "../../../src/store/stores/useStoresStore";
 
 function matchesStore(store: Store, query: string) {
   const q = query.trim().toLowerCase();

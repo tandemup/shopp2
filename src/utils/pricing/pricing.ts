@@ -1,6 +1,6 @@
-import type { PriceResult } from "@/src/types/PriceResult";
-import type { Promotion } from "@/src/types/Promotion";
-import type { ValidationResult } from "@/src/types/ValidationResult";
+import type { PriceResult } from "../../types/PriceResult";
+import type { Promotion } from "../../types/Promotion";
+import type { ValidationResult } from "../../types/ValidationResult";
 
 const round2 = (value: number): number =>
   Math.round((value + Number.EPSILON) * 100) / 100;

@@ -1,4 +1,4 @@
-import { Promotion } from "@/src/types/Promotion";
+import { Promotion } from "../../types/Promotion";
 
 export const isSamePromotion = (a?: Promotion, b?: Promotion): boolean => {
   if (!a && !b) return true;

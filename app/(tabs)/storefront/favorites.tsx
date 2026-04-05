@@ -2,11 +2,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { StoreCard } from "@/src/components/stores/StoreCard";
-import { useListsStore } from "@/src/store/lists/useListsStore";
-import { selectFavorites } from "@/src/store/stores/selectors";
-import type { Store } from "@/src/store/stores/useStoresStore";
-import { useStoresStore } from "@/src/store/stores/useStoresStore";
+import { StoreCard } from "../../../src/components/stores/StoreCard";
+import { useListsStore } from "../../../src/store/lists/useListsStore";
+import { selectFavorites } from "../../../src/store/stores/selectors";
+import type { Store } from "../../../src/store/stores/useStoresStore";
+import { useStoresStore } from "../../../src/store/stores/useStoresStore";
 
 export default function StoreFavoritesScreen() {
   const router = useRouter();

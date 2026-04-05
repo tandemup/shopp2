@@ -1,6 +1,6 @@
 // src/constants/promotions.ts
 
-import type { Promotion } from "@/src/types/Promotion";
+import type { Promotion } from "../types/Promotion";
 
 export const PROMOTIONS: {
   id: string;

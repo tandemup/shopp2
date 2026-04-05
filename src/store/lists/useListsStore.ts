@@ -1,13 +1,13 @@
 // src/store/lists/useListsStore.ts
-import { storage } from "@/src/utils/storage/storage";
+import { storage } from "../../utils/storage/storage";
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import { useSettingsStore } from "@/src/store/settings/useSettingsStore";
-import type { Item } from "@/src/types/Item";
-import type { List } from "@/src/types/List";
-import { generateId } from "@/src/utils/generateId";
+import { useSettingsStore } from "../settings/useSettingsStore";
+import type { Item } from "../../types/Item";
+import type { List } from "../../types/List";
+import { generateId } from "../../utils/generateId";
 
 const toNumber = (v: any, fallback: number) => {
   const n = typeof v === "number" ? v : parseFloat(v);

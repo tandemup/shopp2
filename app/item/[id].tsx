@@ -1,15 +1,15 @@
-import UNITS from "@/data/units.json";
-import { alert, confirm } from "@/src/components/ui/dialog/dialog";
-import { PROMOTIONS } from "@/src/constants/promotions";
-import { useListsStore } from "@/src/store/lists/useListsStore";
-import type { Promotion } from "@/src/types/Promotion";
-import { formatCurrency } from "@/src/utils/currency";
-import { isSamePromotion } from "@/src/utils/pricing/isSamePromotion";
+import UNITS from "../../data/units.json";
+import { alert, confirm } from "../../src/components/ui/dialog/dialog";
+import { PROMOTIONS } from "../../src/constants/promotions";
+import { useListsStore } from "../../src/store/lists/useListsStore";
+import type { Promotion } from "../../src/types/Promotion";
+import { formatCurrency } from "../../src/utils/currency";
+import { isSamePromotion } from "../../src/utils/pricing/isSamePromotion";
 import {
   calculateItemPrice,
   normalizePromotion,
   validatePromotion,
-} from "@/src/utils/pricing/pricing";
+} from "../../src/utils/pricing/pricing";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";

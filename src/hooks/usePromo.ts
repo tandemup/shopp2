@@ -1,8 +1,8 @@
-import { Promotion } from "@/src/types/Promotion";
+import { Promotion } from "../types/Promotion";
 import {
   fromPromotion,
   toPromotion,
-} from "@/src/utils/pricing/PromotionMapper";
+} from "../utils/pricing/PromotionMapper";
 import { useEffect, useMemo, useState } from "react";
 
 export function usePromo(initial?: Promotion) {

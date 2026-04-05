@@ -1,4 +1,4 @@
-import BarcodeScanner from "@/src/components/scanner/BarcodeScanner";
+import BarcodeScanner from "../../src/components/scanner/BarcodeScanner";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";

@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { Store } from "@/src/store/stores/useStoresStore";
-import { useStoresStore } from "@/src/store/stores/useStoresStore";
+import type { Store } from "../../store/stores/useStoresStore";
+import { useStoresStore } from "../../store/stores/useStoresStore";
 
 type Props = {
   store: Store;
