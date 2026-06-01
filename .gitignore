@@ -3,14 +3,6 @@
 # dependencies
 node_modules/
 
-# legacy
-legacy/
-
-# convex
-convex/_generated
-.env.local
-convex.md
-
 # Expo
 .expo/
 dist/

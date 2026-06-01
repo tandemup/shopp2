@@ -1,194 +1,98 @@
-import { useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Image } from 'expo-image';
+import { Platform, StyleSheet } from 'react-native';
 
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { HelloWave } from '@/components/hello-wave';
+import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Link } from 'expo-router';
 
-import ListCard from "../../src/components/lists/ListCard";
-import { actionSheet } from "../../src/components/ui/dialog/dialog";
-import { useListsStore } from "../../src/store/lists/useListsStore";
-
-export default function ShoppingListsScreen() {
-  const router = useRouter();
-
-  const lists = useListsStore((s) => s.lists);
-  const hasHydrated = useListsStore((s) => s.hasHydrated);
-  const addList = useListsStore((s) => s.addList);
-  const deleteList = useListsStore((s) => s.deleteList);
-  const archiveList = useListsStore((s) => s.archiveList);
-  const updateList = useListsStore((s) => s.updateList);
-
-  const [name, setName] = useState("");
-
-  const handleAddList = () => {
-    if (!name.trim()) return;
-    addList(name.trim());
-    setName("");
-  };
-
-  const handleOpenList = (id: string) => {
-    router.push(`/list/${id}`);
-  };
-
-  const handleEditList = async (list: any) => {
-    const newName = await prompt("Editar nombre", "Introduce el nuevo nombre");
-
-    if (!newName || !newName.trim()) return;
-
-    updateList(list.id, {
-      name: newName.trim(),
-    });
-  };
-
-  const openMenu = async (list: any) => {
-    const index = await actionSheet(list.name, [
-      { text: "Abrir" },
-      { text: "Archivar" },
-      { text: "Editar nombre" },
-      { text: "Eliminar", style: "destructive" },
-      { text: "Cancelar", style: "cancel" },
-    ]);
-
-    if (index === 0) {
-      handleOpenList(list.id);
-    } else if (index === 1) {
-      archiveList(list.id);
-    } else if (index === 2) {
-      handleEditList(list);
-    } else if (index === 3) {
-      deleteList(list.id);
-    }
-  };
-
-  const sortedLists = [...lists].sort(
-    (a: any, b: any) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
-
-  if (!hasHydrated) return null;
-
+export default function HomeScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Mis listas</Text>
-
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nueva lista..."
-            placeholderTextColor="#999"
-            value={name}
-            onChangeText={setName}
-            onSubmitEditing={handleAddList}
-          />
-
-          <Pressable style={styles.addButton} onPress={handleAddList}>
-            <Ionicons name="add" size={22} color="#16a34a" />
-          </Pressable>
-        </View>
-
-        <FlatList
-          keyboardShouldPersistTaps="handled"
-          data={sortedLists}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <ListCard
-              list={item}
-              onPress={() => handleOpenList(item.id)}
-              onMenu={() => openMenu(item)}
-            />
-          )}
-          ListEmptyComponent={
-            <View style={styles.emptyBox}>
-              <Text style={styles.emptyTitle}>No hay listas todavía</Text>
-              <Text style={styles.emptyText}>
-                Crea una lista para empezar a usar Shopp.
-              </Text>
-            </View>
-          }
-          contentContainerStyle={
-            lists.length === 0 ? styles.emptyContent : undefined
-          }
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/partial-react-logo.png')}
+          style={styles.reactLogo}
         />
-      </View>
-    </SafeAreaView>
+      }>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Welcome!</ThemedText>
+        <HelloWave />
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+        <ThemedText>
+          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
+          Press{' '}
+          <ThemedText type="defaultSemiBold">
+            {Platform.select({
+              ios: 'cmd + d',
+              android: 'cmd + m',
+              web: 'F12',
+            })}
+          </ThemedText>{' '}
+          to open developer tools.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <Link href="/modal">
+          <Link.Trigger>
+            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
+          </Link.Trigger>
+          <Link.Preview />
+          <Link.Menu>
+            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
+            <Link.MenuAction
+              title="Share"
+              icon="square.and.arrow.up"
+              onPress={() => alert('Share pressed')}
+            />
+            <Link.Menu title="More" icon="ellipsis">
+              <Link.MenuAction
+                title="Delete"
+                icon="trash"
+                destructive
+                onPress={() => alert('Delete pressed')}
+              />
+            </Link.Menu>
+          </Link.Menu>
+        </Link>
+
+        <ThemedText>
+          {`Tap the Explore tab to learn more about what's included in this starter app.`}
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
+        <ThemedText>
+          {`When you're ready, run `}
+          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
+          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+        </ThemedText>
+      </ThemedView>
+    </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#f6f7fb",
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-
-  container: {
-    flex: 1,
-    padding: 16,
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
   },
-
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-
-  input: {
-    flex: 1,
-    backgroundColor: "#fff",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    fontSize: 16,
-  },
-
-  addButton: {
-    marginLeft: 10,
-    width: 46,
-    height: 46,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#16a34a",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  emptyContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-
-  emptyBox: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-
-  emptyText: {
-    color: "#6b7280",
-    lineHeight: 20,
+  reactLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
   },
 });
