@@ -8,7 +8,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build": "expo export --platform web",
-    "serve": "expo serve"
+    "serve": "expo serve",
+    "native:ios": "expo run:ios",
+    "native:android": "expo run:android"
   },
   "dependencies": {
     "expo": "~54.0.34",
@@ -18,7 +20,12 @@
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "^5.8.0",
-    "react-native-web": "^0.21.0"
+    "react-native-web": "^0.21.0",
+    "expo-dev-client": "~6.0.18",
+    "react-native-nitro-image": "^0.15.0",
+    "react-native-nitro-modules": "^0.35.9",
+    "react-native-vision-camera": "^5.0.11",
+    "react-native-vision-camera-barcode-scanner": "^5.0.11"
   },
   "private": true
 }
